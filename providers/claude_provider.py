@@ -16,16 +16,16 @@ class ClaudeProvider(BaseProvider):
     Claude provider implementation using Anthropic SDK.
 
     Models:
-    - Big model: claude-sonnet-4:latest (for orchestration, verification, synthesis)
+    - Big model: claude-sonnet-4-5:latest (for orchestration, verification, synthesis)
     - Small model: claude-haiku-3-5:latest (for searches, compression)
 
     Pricing (as of January 2025):
-    - Sonnet 4: $3.00/MTok input, $15.00/MTok output
+    - Sonnet 4.5: $3.00/MTok input, $15.00/MTok output
     - Haiku 3.5: $0.80/MTok input, $4.00/MTok output
     """
 
     # Model identifiers
-    BIG_MODEL = "claude-sonnet-4:latest"
+    BIG_MODEL = "claude-sonnet-4-5:latest"
     SMALL_MODEL = "claude-haiku-3-5:latest"
 
     # Pricing per million tokens (USD)
