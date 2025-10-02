@@ -16,8 +16,8 @@ class ClaudeProvider(BaseProvider):
     Claude provider implementation using Anthropic SDK.
 
     Models:
-    - Big model: claude-sonnet-4-20250514 (for orchestration, verification, synthesis)
-    - Small model: claude-haiku-3-5-20250307 (for searches, compression)
+    - Big model: claude-sonnet-4:latest (for orchestration, verification, synthesis)
+    - Small model: claude-haiku-3-5:latest (for searches, compression)
 
     Pricing (as of January 2025):
     - Sonnet 4: $3.00/MTok input, $15.00/MTok output
@@ -25,19 +25,13 @@ class ClaudeProvider(BaseProvider):
     """
 
     # Model identifiers
-    BIG_MODEL = "claude-sonnet-4-20250514"
-    SMALL_MODEL = "claude-haiku-3-5-20250307"
+    BIG_MODEL = "claude-sonnet-4:latest"
+    SMALL_MODEL = "claude-haiku-3-5:latest"
 
     # Pricing per million tokens (USD)
     PRICING = {
-        "big": {
-            "input": 3.00,
-            "output": 15.00
-        },
-        "small": {
-            "input": 0.80,
-            "output": 4.00
-        }
+        "big": {"input": 3.00, "output": 15.00},
+        "small": {"input": 0.80, "output": 4.00},
     }
 
     def __init__(self, api_key: str):
@@ -56,7 +50,7 @@ class ClaudeProvider(BaseProvider):
         model_type: str,
         system_prompt: str,
         tools: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Create an agent instance.
@@ -74,7 +68,9 @@ class ClaudeProvider(BaseProvider):
             ValueError: If model_type is invalid
         """
         if model_type not in ["big", "small"]:
-            raise ValueError(f"Invalid model_type: {model_type}. Must be 'big' or 'small'")
+            raise ValueError(
+                f"Invalid model_type: {model_type}. Must be 'big' or 'small'"
+            )
 
         model_name = self.BIG_MODEL if model_type == "big" else self.SMALL_MODEL
 
@@ -83,17 +79,13 @@ class ClaudeProvider(BaseProvider):
             "system_prompt": system_prompt,
             "tools": tools or [],
             "model_type": model_type,
-            **kwargs
+            **kwargs,
         }
 
         return agent_config
 
     async def send_message(
-        self,
-        agent: Dict[str, Any],
-        message: str,
-        temperature: float = 0.3,
-        **kwargs
+        self, agent: Dict[str, Any], message: str, temperature: float = 0.3, **kwargs
     ) -> str:
         """
         Send a message to the agent and get response.
@@ -117,7 +109,7 @@ class ClaudeProvider(BaseProvider):
                 messages=[{"role": "user", "content": message}],
                 temperature=temperature,
                 max_tokens=kwargs.get("max_tokens", 4096),
-                **{k: v for k, v in kwargs.items() if k != "max_tokens"}
+                **{k: v for k, v in kwargs.items() if k != "max_tokens"},
             )
 
             # Extract text content from response
@@ -132,10 +124,7 @@ class ClaudeProvider(BaseProvider):
             raise Exception(f"Claude API error: {str(e)}") from e
 
     async def call_tool(
-        self,
-        agent: Dict[str, Any],
-        tool_name: str,
-        arguments: Dict[str, Any]
+        self, agent: Dict[str, Any], tool_name: str, arguments: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Execute a tool call.
@@ -160,12 +149,14 @@ class ClaudeProvider(BaseProvider):
             response = await self.client.messages.create(
                 model=agent["model"],
                 system=agent["system_prompt"],
-                messages=[{
-                    "role": "user",
-                    "content": f"Execute tool: {tool_name} with arguments: {arguments}"
-                }],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Execute tool: {tool_name} with arguments: {arguments}",
+                    }
+                ],
                 tools=[{"name": tool_name, "description": f"Tool: {tool_name}"}],
-                max_tokens=4096
+                max_tokens=4096,
             )
 
             # Extract tool use result
@@ -174,14 +165,14 @@ class ClaudeProvider(BaseProvider):
                     return {
                         "tool_name": block.name,
                         "result": block.input,
-                        "success": True
+                        "success": True,
                     }
 
             return {
                 "tool_name": tool_name,
                 "result": None,
                 "success": False,
-                "error": "No tool use in response"
+                "error": "No tool use in response",
             }
 
         except Exception as e:
@@ -189,7 +180,7 @@ class ClaudeProvider(BaseProvider):
                 "tool_name": tool_name,
                 "result": None,
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     def get_token_count(self, text: str) -> int:
@@ -212,12 +203,7 @@ class ClaudeProvider(BaseProvider):
             # Fallback: approximate 1 token per 4 characters
             return len(text) // 4
 
-    def get_cost(
-        self,
-        model_type: str,
-        input_tokens: int,
-        output_tokens: int
-    ) -> float:
+    def get_cost(self, model_type: str, input_tokens: int, output_tokens: int) -> float:
         """
         Calculate cost for token usage.
 
