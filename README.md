@@ -53,7 +53,7 @@ uv pip install -r requirements.txt
 
 # Install MCP servers (required for search functionality)
 # Sequential Thinking MCP Server
-npx -y @anthropic-ai/mcp-server-sequential-thinking
+npx -y @modelcontextprotocol/server-sequential-thinking
 
 # MCP Omnisearch (for multi-provider search)
 # Note: Replace with actual installation path or use global install
