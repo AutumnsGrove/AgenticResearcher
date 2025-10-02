@@ -283,9 +283,17 @@ class OmnisearchWrapper:
         """
         import anyio
 
-        tasks = [self.search(query, provider, num_results) for provider in providers]
+        # Execute in parallel using anyio task groups
+        results = []
+        async with anyio.create_task_group() as tg:
+            for provider in providers:
 
-        results = await anyio.gather(*tasks)
+                async def run_search(p=provider):
+                    result = await self.search(query, p, num_results)
+                    results.append(result)
+
+                tg.start_soon(run_search)
+
         return results
 
     def generate_query_variations(

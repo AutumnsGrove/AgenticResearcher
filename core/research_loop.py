@@ -259,14 +259,16 @@ class ResearchLoop:
         """
         angles = research_plan.get("angles", [])[:num_agents]
 
-        # Create agent tasks
-        agent_tasks = []
-        for angle in angles:
-            task = self._search_agent_task(angle, research_plan)
-            agent_tasks.append(task)
+        # Execute in parallel using anyio task groups
+        results = []
+        async with anyio.create_task_group() as tg:
+            for angle in angles:
 
-        # Execute in parallel using anyio.gather()
-        results = await anyio.gather(*agent_tasks)
+                async def run_agent(a=angle):
+                    result = await self._search_agent_task(a, research_plan)
+                    results.append(result)
+
+                tg.start_soon(run_agent)
 
         return results
 
