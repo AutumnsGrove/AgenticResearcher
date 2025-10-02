@@ -48,8 +48,18 @@ cd AgenticResearcher
 uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
+# Install Python dependencies
 uv pip install -r requirements.txt
+
+# Install MCP servers (required for search functionality)
+# Sequential Thinking MCP Server
+npx -y @modelcontextprotocol/server-sequential-thinking
+
+# MCP Omnisearch (for multi-provider search)
+# Note: Replace with actual installation path or use global install
+npm install -g mcp-omnisearch
+# OR install locally in project directory:
+# npm install mcp-omnisearch
 ```
 
 ### Configuration
@@ -70,7 +80,10 @@ cp config/secrets.template.json config/secrets.json
   },
   "mcp_tools": {
     "tavily_api_key": "tvly-...",
-    "brave_api_key": "BSA..."
+    "brave_api_key": "BSA...",
+    "exa_api_key": "",
+    "kagi_api_key": "",
+    "github_token": ""
   }
 }
 ```
@@ -79,26 +92,19 @@ cp config/secrets.template.json config/secrets.json
 
 ### Basic Usage
 
-```python
-from core.research_loop import research_loop
-from utils import ConfigLoader, setup_logging
+```bash
+# Run a research query
+uv run main.py "What are the latest developments in quantum computing?"
 
-# Setup
-config = ConfigLoader("config/secrets.json")
-logger = setup_logging(level="INFO", component="main")
+# With custom options
+uv run main.py "AI safety challenges" --provider claude --max-iterations 5 --output report.md
 
-# Execute research
-results = await research_loop(
-    query="What are the latest developments in quantum computing?",
-    provider_name="claude",
-    max_iterations=3,
-    confidence_threshold=0.85
-)
+# Verbose mode for debugging
+uv run main.py "Quantum computing" --verbose
 
-# Access results
-print(results.final_report)
-print(f"Confidence: {results.final_confidence}")
-print(f"Total cost: ${results.total_cost:.4f}")
+# Or with Python directly (if venv activated)
+source .venv/bin/activate
+python main.py "Your research query here"
 ```
 
 ## 📊 System Architecture
@@ -154,7 +160,7 @@ Final Markdown Report
 - **metrics.py** - Performance tracking
 
 ### MCP Integrations (`/mcp`)
-- **omnisearch.py** - 7 search providers (Tavily, Brave, Exa, Kagi, Perplexity, Jina, Firecrawl)
+- **omnisearch.py** - 8 search providers (Tavily, Brave, Exa, Kagi, Perplexity, Jina, Firecrawl, GitHub)
 - **sequential_thinking.py** - Strategic reasoning and planning
 
 ## 📈 Performance

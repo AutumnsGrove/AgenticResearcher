@@ -17,6 +17,7 @@ import json
 @dataclass
 class VerificationResult:
     """Results from verification agent"""
+
     confidence: float
     coverage_score: float
     depth_score: float
@@ -30,6 +31,7 @@ class VerificationResult:
 @dataclass
 class ResearchReport:
     """Final research report"""
+
     query: str
     findings: List[Dict[str, Any]]
     report: str
@@ -70,7 +72,7 @@ class ResearchLoop:
         min_searches: int = 25,
         max_iterations: int = 5,
         confidence_threshold: float = 0.85,
-        cost_limit: float = 1.00
+        cost_limit: float = 1.00,
     ):
         """
         Initialize research loop
@@ -95,10 +97,7 @@ class ResearchLoop:
         self.cost_limit = cost_limit
 
     async def research_loop(
-        self,
-        query: str,
-        orchestrator_agent: Any,
-        num_agents_per_iteration: int = 5
+        self, query: str, orchestrator_agent: Any, num_agents_per_iteration: int = 5
     ) -> ResearchReport:
         """
         Execute iterative research loop
@@ -116,8 +115,10 @@ class ResearchLoop:
         verification_history = []
 
         print(f"🔍 Starting iterative research on: {query}")
-        print(f"📊 Settings: max_iterations={self.max_iterations}, "
-              f"confidence_threshold={self.confidence_threshold}")
+        print(
+            f"📊 Settings: max_iterations={self.max_iterations}, "
+            f"confidence_threshold={self.confidence_threshold}"
+        )
 
         while iteration < self.max_iterations:
             print(f"\n{'='*80}")
@@ -127,31 +128,27 @@ class ResearchLoop:
             # Check cost limit
             current_cost = self.cost_tracker.get_cost()
             if current_cost >= self.cost_limit:
-                print(f"💰 Cost limit reached: ${current_cost:.2f} >= ${self.cost_limit:.2f}")
+                print(
+                    f"💰 Cost limit reached: ${current_cost:.2f} >= ${self.cost_limit:.2f}"
+                )
                 break
 
             # Step 1: Sequential thinking for strategy
             print("🧠 Creating research plan with Sequential Thinking...")
             research_plan = await self._create_research_plan(
-                query,
-                all_findings,
-                iteration
+                query, all_findings, iteration
             )
 
             # Step 2: Spawn search agents in parallel
             print(f"🚀 Spawning {num_agents_per_iteration} search agents...")
             new_findings = await self._spawn_search_agents(
-                research_plan,
-                num_agents_per_iteration
+                research_plan, num_agents_per_iteration
             )
             all_findings.extend(new_findings)
 
             # Step 3: Verification
             print("✅ Verifying research sufficiency...")
-            verification_result = await self._verify_sufficiency(
-                all_findings,
-                query
-            )
+            verification_result = await self._verify_sufficiency(all_findings, query)
             verification_history.append(verification_result)
 
             # Step 4: Check if satisfied
@@ -163,11 +160,15 @@ class ResearchLoop:
             print(f"   Consistency: {verification_result.consistency_score:.2f}")
 
             if verification_result.confidence >= self.confidence_threshold:
-                print(f"\n✅ Confidence threshold met! ({verification_result.confidence:.2f} >= {self.confidence_threshold})")
+                print(
+                    f"\n✅ Confidence threshold met! ({verification_result.confidence:.2f} >= {self.confidence_threshold})"
+                )
                 break
 
             # Need more research
-            print(f"\n🔍 Confidence below threshold ({verification_result.confidence:.2f} < {self.confidence_threshold})")
+            print(
+                f"\n🔍 Confidence below threshold ({verification_result.confidence:.2f} < {self.confidence_threshold})"
+            )
             print(f"📋 Knowledge gaps identified:")
             for gap in verification_result.gaps:
                 print(f"   - {gap}")
@@ -200,22 +201,21 @@ class ResearchLoop:
                 "total_iterations": iteration + 1,
                 "total_searches": len(all_findings),
                 "total_cost": self.cost_tracker.get_cost(),
-                "final_confidence": verification_history[-1].confidence if verification_history else 0.0,
-                "timestamp": datetime.now().isoformat()
+                "final_confidence": (
+                    verification_history[-1].confidence if verification_history else 0.0
+                ),
+                "timestamp": datetime.now().isoformat(),
             },
             verification_history=verification_history,
             total_iterations=iteration + 1,
             total_searches=len(all_findings),
-            total_cost=self.cost_tracker.get_cost()
+            total_cost=self.cost_tracker.get_cost(),
         )
 
         return final_report
 
     async def _create_research_plan(
-        self,
-        query: str,
-        existing_findings: List[Dict],
-        iteration: int
+        self, query: str, existing_findings: List[Dict], iteration: int
     ) -> Dict[str, Any]:
         """
         Use Sequential Thinking to create research plan
@@ -236,17 +236,16 @@ class ResearchLoop:
 
         # Use Sequential Thinking for planning
         plan = await self.sequential_thinking.create_research_plan(
-            query=query,
-            existing_findings=findings_summary,
-            iteration=iteration
+            query=query, existing_findings=findings_summary, iteration=iteration
         )
 
-        return plan
+        # Convert ResearchPlan dataclass to dict for compatibility
+        from dataclasses import asdict
+
+        return asdict(plan)
 
     async def _spawn_search_agents(
-        self,
-        research_plan: Dict[str, Any],
-        num_agents: int
+        self, research_plan: Dict[str, Any], num_agents: int
     ) -> List[Dict[str, Any]]:
         """
         Spawn search agents in parallel based on research plan
@@ -272,9 +271,7 @@ class ResearchLoop:
         return results
 
     async def _search_agent_task(
-        self,
-        angle: Dict[str, Any],
-        research_plan: Dict[str, Any]
+        self, angle: Dict[str, Any], research_plan: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Single search agent task
@@ -290,22 +287,20 @@ class ResearchLoop:
         agent = await self.provider.create_agent(
             model_type="small",
             system_prompt=self._get_search_agent_prompt(angle, research_plan),
-            tools=["search_tavily", "search_brave", "search_exa", "search_kagi"]
+            tools=["search_tavily", "search_brave", "search_exa", "search_kagi"],
         )
 
         # Execute searches (typically 5 per agent)
         findings = await self.provider.send_message(
             agent,
             f"Execute 5 targeted searches on: {angle.get('description', angle)}",
-            temperature=0.1
+            temperature=0.1,
         )
 
         return findings
 
     async def _verify_sufficiency(
-        self,
-        all_findings: List[Dict[str, Any]],
-        query: str
+        self, all_findings: List[Dict[str, Any]], query: str
     ) -> VerificationResult:
         """
         Verify research sufficiency using verification agent
@@ -319,28 +314,25 @@ class ResearchLoop:
         """
         # Use Sequential Thinking for verification reasoning
         verification = await self.sequential_thinking.verify_research(
-            query=query,
-            findings=all_findings
+            query=query, findings=all_findings
         )
 
-        # Parse verification result
+        # verification is already a VerificationAnalysis dataclass
+        # Convert to VerificationResult for compatibility
         result = VerificationResult(
-            confidence=verification.get("confidence", 0.0),
-            coverage_score=verification.get("coverage_score", 0.0),
-            depth_score=verification.get("depth_score", 0.0),
-            source_quality_score=verification.get("source_quality_score", 0.0),
-            consistency_score=verification.get("consistency_score", 0.0),
-            gaps=verification.get("gaps", []),
-            recommended_angles=verification.get("recommended_angles", []),
-            decision=verification.get("decision", "continue")
+            confidence=verification.confidence,
+            coverage_score=verification.coverage_score,
+            depth_score=verification.depth_score,
+            source_quality_score=verification.source_quality_score,
+            consistency_score=verification.consistency_score,
+            gaps=verification.gaps,
+            recommended_angles=verification.recommended_angles,
+            decision=verification.decision,
         )
 
         return result
 
-    async def _edit_context(
-        self,
-        all_findings: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def _edit_context(self, all_findings: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Optimize context using context editor
 
@@ -354,22 +346,20 @@ class ResearchLoop:
         editor = await self.provider.create_agent(
             model_type="big",
             system_prompt=self._get_context_editor_prompt(),
-            tools=["edit_context", "prioritize_content"]
+            tools=["edit_context", "prioritize_content"],
         )
 
         # Optimize context
         optimized = await self.provider.send_message(
             editor,
             f"Optimize these findings for final synthesis: {json.dumps(all_findings)}",
-            temperature=0.3
+            temperature=0.3,
         )
 
         return optimized
 
     async def _synthesize_report(
-        self,
-        query: str,
-        optimized_context: Dict[str, Any]
+        self, query: str, optimized_context: Dict[str, Any]
     ) -> str:
         """
         Generate final synthesis report
@@ -385,14 +375,14 @@ class ResearchLoop:
         synthesizer = await self.provider.create_agent(
             model_type="big",
             system_prompt=self._get_synthesis_agent_prompt(),
-            tools=["synthesize", "export_report"]
+            tools=["synthesize", "export_report"],
         )
 
         # Generate report
         report = await self.provider.send_message(
             synthesizer,
             f"Create comprehensive report for: {query}\n\nFindings: {json.dumps(optimized_context)}",
-            temperature=0.3
+            temperature=0.3,
         )
 
         return report
