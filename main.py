@@ -1,17 +1,4 @@
-#!/usr/bin/env -S uv run
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "anthropic>=0.21.0",
-#     "openai>=1.12.0",
-#     "google-generativeai>=0.3.0",
-#     "anyio>=4.0.0",
-#     "aiohttp>=3.9.0",
-#     "python-dotenv>=1.0.0",
-#     "typing-extensions>=4.9.0",
-#     "rich>=13.7.0",
-# ]
-# ///
+#!/usr/bin/env python3
 """
 Agentic Research System - Main Entry Point
 
@@ -20,8 +7,11 @@ LLM providers and search tools. The system spawns parallel search agents,
 verifies research sufficiency, and iterates until confidence thresholds are met.
 
 Usage Examples:
-    # With UV (recommended)
+    # With UV (recommended - uses existing venv)
     uv run main.py "What is quantum computing?"
+
+    # Or with Python directly (if venv is activated)
+    python main.py "What is quantum computing?"
 
     # Custom provider and iterations
     uv run main.py "Latest AI trends 2025" --provider claude --max-iterations 5
@@ -38,8 +28,10 @@ Usage Examples:
     # Custom config location
     uv run main.py "Renewable energy" --config /path/to/secrets.json
 
-    # Traditional Python (if dependencies installed)
-    python main.py "Your query here"
+Prerequisites:
+    - Python 3.11+
+    - Dependencies installed via: uv pip install -r requirements.txt
+    - API keys configured in config/secrets.json
 
 Author: Agentic Research Team
 Version: 1.0.0
@@ -58,12 +50,19 @@ import traceback
 # Rich for beautiful terminal output
 try:
     from rich.console import Console
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+    from rich.progress import (
+        Progress,
+        SpinnerColumn,
+        TextColumn,
+        BarColumn,
+        TimeElapsedColumn,
+    )
     from rich.table import Table
     from rich.panel import Panel
     from rich.markdown import Markdown
     from rich.tree import Tree
     from rich import print as rprint
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -108,9 +107,7 @@ class ResearchCLI:
         else:
             log_level = "ERROR" if self.args.quiet else "INFO"
             self.logger = setup_logging(
-                level=log_level,
-                component="main",
-                use_colors=True
+                level=log_level, component="main", use_colors=True
             )
 
     def _print(self, message: str, style: Optional[str] = None) -> None:
@@ -151,28 +148,48 @@ class ResearchCLI:
             validation = self.config.validate()
 
             if not validation["valid"]:
-                self._print("\n[bold red]Configuration Errors:[/bold red]" if self.console else "\n❌ Configuration Errors:")
+                self._print(
+                    "\n[bold red]Configuration Errors:[/bold red]"
+                    if self.console
+                    else "\n❌ Configuration Errors:"
+                )
                 for error in validation["errors"]:
                     self._print(f"  - {error}", "red")
                 sys.exit(1)
 
             if validation["warnings"] and not self.args.quiet:
-                self._print("\n[bold yellow]Configuration Warnings:[/bold yellow]" if self.console else "\n⚠️  Configuration Warnings:")
+                self._print(
+                    "\n[bold yellow]Configuration Warnings:[/bold yellow]"
+                    if self.console
+                    else "\n⚠️  Configuration Warnings:"
+                )
                 for warning in validation["warnings"]:
                     self._print(f"  - {warning}", "yellow")
                 self._print("")
 
         except FileNotFoundError as e:
-            self._print(f"\n[bold red]Configuration file not found:[/bold red] {e}" if self.console else f"\n❌ Configuration file not found: {e}")
+            self._print(
+                f"\n[bold red]Configuration file not found:[/bold red] {e}"
+                if self.console
+                else f"\n❌ Configuration file not found: {e}"
+            )
             print(f"\nPlease create {self.args.config} using the template:")
             print(f"  cp config/secrets.template.json {self.args.config}")
             print(f"\nThen add your API keys to the file.")
             sys.exit(1)
         except json.JSONDecodeError as e:
-            self._print(f"\n[bold red]Invalid JSON in configuration file:[/bold red] {e}" if self.console else f"\n❌ Invalid JSON in configuration file: {e}")
+            self._print(
+                f"\n[bold red]Invalid JSON in configuration file:[/bold red] {e}"
+                if self.console
+                else f"\n❌ Invalid JSON in configuration file: {e}"
+            )
             sys.exit(1)
         except Exception as e:
-            self._print(f"\n[bold red]Error loading configuration:[/bold red] {e}" if self.console else f"\n❌ Error loading configuration: {e}")
+            self._print(
+                f"\n[bold red]Error loading configuration:[/bold red] {e}"
+                if self.console
+                else f"\n❌ Error loading configuration: {e}"
+            )
             sys.exit(1)
 
     def initialize_provider(self):
@@ -190,7 +207,9 @@ class ResearchCLI:
                 available_providers = self.config.get_enabled_providers()
                 print(f"\n❌ Provider '{provider_name}' is not enabled")
                 print(f"\nEnabled providers: {', '.join(available_providers)}")
-                print(f"\nTo enable '{provider_name}', set 'enabled': true in {self.args.config}")
+                print(
+                    f"\nTo enable '{provider_name}', set 'enabled': true in {self.args.config}"
+                )
                 sys.exit(1)
 
             # Get API key
@@ -202,24 +221,35 @@ class ResearchCLI:
                 if not self.args.quiet:
                     self._print("✓ Initialized Claude provider", "green")
             else:
-                self._print(f"\n[bold red]Provider '{provider_name}' not implemented yet[/bold red]" if self.console else f"\n❌ Provider '{provider_name}' not implemented yet")
+                self._print(
+                    f"\n[bold red]Provider '{provider_name}' not implemented yet[/bold red]"
+                    if self.console
+                    else f"\n❌ Provider '{provider_name}' not implemented yet"
+                )
                 print(f"\nCurrently supported providers: claude")
                 print(f"\nComing soon: openai, openrouter, gemini")
                 sys.exit(1)
 
         except ValueError as e:
-            self._print(f"\n[bold red]Provider error:[/bold red] {e}" if self.console else f"\n❌ Provider error: {e}")
+            self._print(
+                f"\n[bold red]Provider error:[/bold red] {e}"
+                if self.console
+                else f"\n❌ Provider error: {e}"
+            )
             sys.exit(1)
         except Exception as e:
-            self._print(f"\n[bold red]Failed to initialize provider:[/bold red] {e}" if self.console else f"\n❌ Failed to initialize provider: {e}")
+            self._print(
+                f"\n[bold red]Failed to initialize provider:[/bold red] {e}"
+                if self.console
+                else f"\n❌ Failed to initialize provider: {e}"
+            )
             sys.exit(1)
 
     def initialize_services(self) -> None:
         """Initialize cost tracking and rate limiting services"""
         # Cost tracker
         self.cost_tracker = CostTracker(
-            budget_limit=self.args.max_cost,
-            alert_thresholds=[0.5, 0.75, 0.9]
+            budget_limit=self.args.max_cost, alert_thresholds=[0.5, 0.75, 0.9]
         )
 
         # Rate limiter (get from config or use default)
@@ -231,7 +261,10 @@ class ResearchCLI:
         self.rate_limiter = RateLimiter(requests_per_minute=rpm)
 
         if not self.args.quiet:
-            self._print(f"✓ Cost tracker initialized (budget: ${self.args.max_cost:.2f})", "green")
+            self._print(
+                f"✓ Cost tracker initialized (budget: ${self.args.max_cost:.2f})",
+                "green",
+            )
             self._print(f"✓ Rate limiter initialized ({rpm} req/min)", "green")
 
     async def run_research(self) -> ResearchReport:
@@ -252,7 +285,13 @@ class ResearchCLI:
 [bold cyan]Max Iterations:[/bold cyan] {self.args.max_iterations}
 [bold cyan]Confidence Threshold:[/bold cyan] {self.args.confidence_threshold:.2%}
 [bold cyan]Max Cost:[/bold cyan] ${self.args.max_cost:.2f}"""
-                self.console.print(Panel(header_content, title="🔍 Agentic Research System", border_style="bold blue"))
+                self.console.print(
+                    Panel(
+                        header_content,
+                        title="🔍 Agentic Research System",
+                        border_style="bold blue",
+                    )
+                )
             else:
                 print(f"\n{'='*80}")
                 print(f"🔍 AGENTIC RESEARCH SYSTEM")
@@ -284,7 +323,7 @@ class ResearchCLI:
             min_searches=25,
             max_iterations=self.args.max_iterations,
             confidence_threshold=self.args.confidence_threshold,
-            cost_limit=self.args.max_cost
+            cost_limit=self.args.max_cost,
         )
 
         # Execute research
@@ -294,7 +333,7 @@ class ResearchCLI:
             report = await research_loop.research_loop(
                 query=self.args.query,
                 orchestrator_agent=orchestrator,
-                num_agents_per_iteration=5
+                num_agents_per_iteration=5,
             )
 
             self.end_time = datetime.now()
@@ -361,7 +400,7 @@ class ResearchCLI:
 
 """
         # Add model breakdown if available
-        if hasattr(self.cost_tracker, 'get_breakdown_by_model'):
+        if hasattr(self.cost_tracker, "get_breakdown_by_model"):
             breakdown = self.cost_tracker.get_breakdown_by_model()
             if breakdown:
                 markdown += "**By Model**:\n"
@@ -392,17 +431,24 @@ class ResearchCLI:
         if self.console:
             # Rich formatted results
             self.console.print("\n")
-            self.console.print(Panel("✅ Research Complete", style="bold green", border_style="green"))
+            self.console.print(
+                Panel("✅ Research Complete", style="bold green", border_style="green")
+            )
 
             # Summary table
-            summary_table = Table(title="📊 Summary Statistics", show_header=False, box=None)
+            summary_table = Table(
+                title="📊 Summary Statistics", show_header=False, box=None
+            )
             summary_table.add_column("Metric", style="cyan", no_wrap=True)
             summary_table.add_column("Value", style="green")
 
             summary_table.add_row("Duration", f"{duration:.1f}s")
             summary_table.add_row("Iterations", str(report.total_iterations))
             summary_table.add_row("Total Searches", str(report.total_searches))
-            summary_table.add_row("Final Confidence", f"{report.metadata.get('final_confidence', 0.0):.2%}")
+            summary_table.add_row(
+                "Final Confidence",
+                f"{report.metadata.get('final_confidence', 0.0):.2%}",
+            )
             summary_table.add_row("Total Cost", f"${report.total_cost:.4f}")
 
             self.console.print(summary_table)
@@ -413,10 +459,18 @@ class ResearchCLI:
                 tree = Tree("📈 [bold]Verification Progress[/bold]")
                 for i, verification in enumerate(report.verification_history, 1):
                     iter_branch = tree.add(f"Iteration {i}")
-                    iter_branch.add(f"Confidence: [cyan]{verification.confidence:.2%}[/cyan]")
-                    iter_branch.add(f"Coverage: [cyan]{verification.coverage_score:.2%}[/cyan]")
-                    iter_branch.add(f"Depth: [cyan]{verification.depth_score:.2%}[/cyan]")
-                    iter_branch.add(f"Quality: [cyan]{verification.source_quality_score:.2%}[/cyan]")
+                    iter_branch.add(
+                        f"Confidence: [cyan]{verification.confidence:.2%}[/cyan]"
+                    )
+                    iter_branch.add(
+                        f"Coverage: [cyan]{verification.coverage_score:.2%}[/cyan]"
+                    )
+                    iter_branch.add(
+                        f"Depth: [cyan]{verification.depth_score:.2%}[/cyan]"
+                    )
+                    iter_branch.add(
+                        f"Quality: [cyan]{verification.source_quality_score:.2%}[/cyan]"
+                    )
                     if verification.gaps:
                         gaps_branch = iter_branch.add(f"Gaps: {len(verification.gaps)}")
                         for gap in verification.gaps[:3]:  # Show first 3
@@ -429,10 +483,16 @@ class ResearchCLI:
 
             # Output info
             if self.args.output:
-                self.console.print(f"\n📄 [bold green]Report saved to:[/bold green] {self.args.output}")
+                self.console.print(
+                    f"\n📄 [bold green]Report saved to:[/bold green] {self.args.output}"
+                )
             else:
                 self.console.print("\n📝 [bold]Report Preview:[/bold]")
-                preview_text = report.report[:400] + "..." if len(report.report) > 400 else report.report
+                preview_text = (
+                    report.report[:400] + "..."
+                    if len(report.report) > 400
+                    else report.report
+                )
                 self.console.print(Panel(preview_text, border_style="dim"))
                 self.console.print("[dim](Use --output to save full report)[/dim]")
 
@@ -446,7 +506,9 @@ class ResearchCLI:
             print(f"   Duration: {duration:.1f}s")
             print(f"   Iterations: {report.total_iterations}")
             print(f"   Total Searches: {report.total_searches}")
-            print(f"   Final Confidence: {report.metadata.get('final_confidence', 0.0):.2%}")
+            print(
+                f"   Final Confidence: {report.metadata.get('final_confidence', 0.0):.2%}"
+            )
             print(f"   Total Cost: ${report.total_cost:.4f}")
 
             print(f"\n💰 Cost Breakdown:")
@@ -475,14 +537,18 @@ class ResearchCLI:
 
             markdown_report = self.format_report(report)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 f.write(markdown_report)
 
             if not self.args.quiet:
                 if self.console:
-                    self.console.print(f"\n✅ [bold green]Report saved successfully to:[/bold green] {output_path.absolute()}")
+                    self.console.print(
+                        f"\n✅ [bold green]Report saved successfully to:[/bold green] {output_path.absolute()}"
+                    )
                 else:
-                    print(f"\n✅ Report saved successfully to: {output_path.absolute()}")
+                    print(
+                        f"\n✅ Report saved successfully to: {output_path.absolute()}"
+                    )
 
         except Exception as e:
             error_msg = f"\n❌ Failed to save report: {e}"
@@ -492,7 +558,9 @@ class ResearchCLI:
                 print(error_msg)
             sys.exit(1)
 
-    def show_progress(self, iteration: int, max_iterations: int, confidence: float = 0.0) -> None:
+    def show_progress(
+        self, iteration: int, max_iterations: int, confidence: float = 0.0
+    ) -> None:
         """
         Show research progress with Rich progress bar if available
 
@@ -506,14 +574,18 @@ class ResearchCLI:
 
         if self.console:
             progress_pct = (iteration / max_iterations) * 100
-            conf_color = "green" if confidence >= self.args.confidence_threshold else "yellow"
+            conf_color = (
+                "green" if confidence >= self.args.confidence_threshold else "yellow"
+            )
             self.console.print(
                 f"[bold blue]Progress:[/bold blue] Iteration {iteration}/{max_iterations} "
                 f"({progress_pct:.0f}%) | "
                 f"[{conf_color}]Confidence: {confidence:.2%}[/{conf_color}]"
             )
         else:
-            print(f"Progress: Iteration {iteration}/{max_iterations} | Confidence: {confidence:.2%}")
+            print(
+                f"Progress: Iteration {iteration}/{max_iterations} | Confidence: {confidence:.2%}"
+            )
 
     async def run(self) -> int:
         """
@@ -540,9 +612,13 @@ class ResearchCLI:
 
         except KeyboardInterrupt:
             if self.console:
-                self.console.print("\n\n[bold yellow]⚠️  Research interrupted by user[/bold yellow]")
+                self.console.print(
+                    "\n\n[bold yellow]⚠️  Research interrupted by user[/bold yellow]"
+                )
                 if self.cost_tracker:
-                    self.console.print(f"\n[yellow]Cost incurred: ${self.cost_tracker.get_cost():.4f}[/yellow]")
+                    self.console.print(
+                        f"\n[yellow]Cost incurred: ${self.cost_tracker.get_cost():.4f}[/yellow]"
+                    )
             else:
                 print("\n\n⚠️  Research interrupted by user")
                 if self.cost_tracker:
@@ -597,14 +673,12 @@ Examples:
   python main.py "Your query here"
 
 For more information, see: https://github.com/your-repo/agentic-research
-        """
+        """,
     )
 
     # Required arguments
     parser.add_argument(
-        "query",
-        type=str,
-        help="Research query or question to investigate"
+        "query", type=str, help="Research query or question to investigate"
     )
 
     # Optional arguments
@@ -613,7 +687,7 @@ For more information, see: https://github.com/your-repo/agentic-research
         type=str,
         default="claude",
         choices=["claude", "openai", "openrouter", "gemini"],
-        help="LLM provider to use (default: claude)"
+        help="LLM provider to use (default: claude)",
     )
 
     parser.add_argument(
@@ -621,7 +695,7 @@ For more information, see: https://github.com/your-repo/agentic-research
         type=int,
         default=3,
         metavar="N",
-        help="Maximum research iterations (default: 3)"
+        help="Maximum research iterations (default: 3)",
     )
 
     parser.add_argument(
@@ -629,7 +703,7 @@ For more information, see: https://github.com/your-repo/agentic-research
         type=float,
         default=0.85,
         metavar="FLOAT",
-        help="Confidence threshold to complete research (0.0-1.0, default: 0.85)"
+        help="Confidence threshold to complete research (0.0-1.0, default: 0.85)",
     )
 
     parser.add_argument(
@@ -637,7 +711,7 @@ For more information, see: https://github.com/your-repo/agentic-research
         type=float,
         default=1.0,
         metavar="USD",
-        help="Maximum cost budget in USD (default: 1.00)"
+        help="Maximum cost budget in USD (default: 1.00)",
     )
 
     parser.add_argument(
@@ -645,7 +719,7 @@ For more information, see: https://github.com/your-repo/agentic-research
         "-o",
         type=str,
         metavar="FILE",
-        help="Output file path for research report (markdown format)"
+        help="Output file path for research report (markdown format)",
     )
 
     parser.add_argument(
@@ -653,29 +727,21 @@ For more information, see: https://github.com/your-repo/agentic-research
         type=str,
         default="config/secrets.json",
         metavar="PATH",
-        help="Path to configuration file (default: config/secrets.json)"
+        help="Path to configuration file (default: config/secrets.json)",
     )
 
     # Logging control
     log_group = parser.add_mutually_exclusive_group()
     log_group.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Enable verbose debug logging"
+        "--verbose", "-v", action="store_true", help="Enable verbose debug logging"
     )
 
     log_group.add_argument(
-        "--quiet",
-        "-q",
-        action="store_true",
-        help="Suppress all output except errors"
+        "--quiet", "-q", action="store_true", help="Suppress all output except errors"
     )
 
     parser.add_argument(
-        "--version",
-        action="version",
-        version="Agentic Research System v1.0.0"
+        "--version", action="version", version="Agentic Research System v1.0.0"
     )
 
     args = parser.parse_args()

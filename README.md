@@ -92,26 +92,19 @@ cp config/secrets.template.json config/secrets.json
 
 ### Basic Usage
 
-```python
-from core.research_loop import research_loop
-from utils import ConfigLoader, setup_logging
+```bash
+# Run a research query
+uv run main.py "What are the latest developments in quantum computing?"
 
-# Setup
-config = ConfigLoader("config/secrets.json")
-logger = setup_logging(level="INFO", component="main")
+# With custom options
+uv run main.py "AI safety challenges" --provider claude --max-iterations 5 --output report.md
 
-# Execute research
-results = await research_loop(
-    query="What are the latest developments in quantum computing?",
-    provider_name="claude",
-    max_iterations=3,
-    confidence_threshold=0.85
-)
+# Verbose mode for debugging
+uv run main.py "Quantum computing" --verbose
 
-# Access results
-print(results.final_report)
-print(f"Confidence: {results.final_confidence}")
-print(f"Total cost: ${results.total_cost:.4f}")
+# Or with Python directly (if venv activated)
+source .venv/bin/activate
+python main.py "Your research query here"
 ```
 
 ## 📊 System Architecture
