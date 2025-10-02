@@ -261,14 +261,25 @@ class ResearchLoop:
 
         # Execute in parallel using anyio task groups
         results = []
+        errors = []
+
+        async def run_agent(a):
+            try:
+                result = await self._search_agent_task(a, research_plan)
+                results.append(result)
+            except Exception as e:
+                print(
+                    f"❌ Error in search agent for angle '{a.get('name', 'unknown')}': {e}"
+                )
+                errors.append(e)
+                results.append({"error": str(e), "angle": a})
+
         async with anyio.create_task_group() as tg:
             for angle in angles:
+                tg.start_soon(run_agent, angle)
 
-                async def run_agent(a=angle):
-                    result = await self._search_agent_task(a, research_plan)
-                    results.append(result)
-
-                tg.start_soon(run_agent)
+        if errors and len(errors) == len(angles):
+            print(f"⚠️ All {len(angles)} agents failed")
 
         return results
 

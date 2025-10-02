@@ -285,14 +285,18 @@ class OmnisearchWrapper:
 
         # Execute in parallel using anyio task groups
         results = []
+
+        async def run_search(p):
+            try:
+                result = await self.search(query, p, num_results)
+                results.append(result)
+            except Exception as e:
+                print(f"❌ Error searching with {p.value}: {e}")
+                results.append({"provider": p.value, "error": str(e), "success": False})
+
         async with anyio.create_task_group() as tg:
             for provider in providers:
-
-                async def run_search(p=provider):
-                    result = await self.search(query, p, num_results)
-                    results.append(result)
-
-                tg.start_soon(run_search)
+                tg.start_soon(run_search, provider)
 
         return results
 
