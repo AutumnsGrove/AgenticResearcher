@@ -25,8 +25,8 @@ class ClaudeProvider(BaseProvider):
     """
 
     # Model identifiers
-    BIG_MODEL = "claude-sonnet-4-5:latest"
-    SMALL_MODEL = "claude-haiku-3-5:latest"
+    BIG_MODEL = "claude-sonnet-4-5-20250929"
+    SMALL_MODEL = "claude-3-5-haiku-20241022"
 
     # Pricing per million tokens (USD)
     PRICING = {
