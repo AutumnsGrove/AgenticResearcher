@@ -48,8 +48,18 @@ cd AgenticResearcher
 uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
+# Install Python dependencies
 uv pip install -r requirements.txt
+
+# Install MCP servers (required for search functionality)
+# Sequential Thinking MCP Server
+npx -y @anthropic-ai/mcp-server-sequential-thinking
+
+# MCP Omnisearch (for multi-provider search)
+# Note: Replace with actual installation path or use global install
+npm install -g mcp-omnisearch
+# OR install locally in project directory:
+# npm install mcp-omnisearch
 ```
 
 ### Configuration
@@ -70,7 +80,10 @@ cp config/secrets.template.json config/secrets.json
   },
   "mcp_tools": {
     "tavily_api_key": "tvly-...",
-    "brave_api_key": "BSA..."
+    "brave_api_key": "BSA...",
+    "exa_api_key": "",
+    "kagi_api_key": "",
+    "github_token": ""
   }
 }
 ```
@@ -154,7 +167,7 @@ Final Markdown Report
 - **metrics.py** - Performance tracking
 
 ### MCP Integrations (`/mcp`)
-- **omnisearch.py** - 7 search providers (Tavily, Brave, Exa, Kagi, Perplexity, Jina, Firecrawl)
+- **omnisearch.py** - 8 search providers (Tavily, Brave, Exa, Kagi, Perplexity, Jina, Firecrawl, GitHub)
 - **sequential_thinking.py** - Strategic reasoning and planning
 
 ## 📈 Performance

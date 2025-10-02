@@ -15,6 +15,7 @@ import json
 
 class SearchProvider(Enum):
     """Available search providers"""
+
     TAVILY = "tavily"
     BRAVE = "brave"
     KAGI = "kagi"
@@ -22,11 +23,13 @@ class SearchProvider(Enum):
     PERPLEXITY = "perplexity"
     JINA = "jina"
     FIRECRAWL = "firecrawl"
+    GITHUB = "github"
 
 
 @dataclass
 class ProviderCharacteristics:
     """Characteristics of each provider"""
+
     name: str
     best_for: str
     latency: str  # "fast", "medium", "slow"
@@ -43,7 +46,7 @@ PROVIDER_SPECS = {
         latency="fast",
         cost="$$",
         quality=5,
-        supports_operators=False
+        supports_operators=False,
     ),
     SearchProvider.BRAVE: ProviderCharacteristics(
         name="Brave",
@@ -51,7 +54,7 @@ PROVIDER_SPECS = {
         latency="fast",
         cost="$",
         quality=4,
-        supports_operators=True
+        supports_operators=True,
     ),
     SearchProvider.KAGI: ProviderCharacteristics(
         name="Kagi",
@@ -59,7 +62,7 @@ PROVIDER_SPECS = {
         latency="medium",
         cost="$$$",
         quality=5,
-        supports_operators=True
+        supports_operators=True,
     ),
     SearchProvider.EXA: ProviderCharacteristics(
         name="Exa",
@@ -67,7 +70,7 @@ PROVIDER_SPECS = {
         latency="medium",
         cost="$$",
         quality=5,
-        supports_operators=False
+        supports_operators=False,
     ),
     SearchProvider.PERPLEXITY: ProviderCharacteristics(
         name="Perplexity",
@@ -75,7 +78,7 @@ PROVIDER_SPECS = {
         latency="slow",
         cost="$$$",
         quality=5,
-        supports_operators=False
+        supports_operators=False,
     ),
     SearchProvider.JINA: ProviderCharacteristics(
         name="Jina AI",
@@ -83,7 +86,7 @@ PROVIDER_SPECS = {
         latency="fast",
         cost="$",
         quality=4,
-        supports_operators=False
+        supports_operators=False,
     ),
     SearchProvider.FIRECRAWL: ProviderCharacteristics(
         name="Firecrawl",
@@ -91,8 +94,16 @@ PROVIDER_SPECS = {
         latency="slow",
         cost="$$$",
         quality=5,
-        supports_operators=False
-    )
+        supports_operators=False,
+    ),
+    SearchProvider.GITHUB: ProviderCharacteristics(
+        name="GitHub",
+        best_for="Code search, repositories, technical documentation",
+        latency="fast",
+        cost="$",
+        quality=5,
+        supports_operators=True,
+    ),
 }
 
 
@@ -130,7 +141,7 @@ class OmnisearchWrapper:
         query: str,
         query_type: str = "general",
         preferred_quality: int = 4,
-        max_latency: str = "medium"
+        max_latency: str = "medium",
     ) -> SearchProvider:
         """
         Select best provider for query
@@ -194,6 +205,12 @@ class OmnisearchWrapper:
                 if provider in [SearchProvider.JINA, SearchProvider.FIRECRAWL]:
                     return provider
 
+        elif query_type == "code":
+            # Prefer GitHub for code search
+            for provider, specs in candidates:
+                if provider == SearchProvider.GITHUB:
+                    return provider
+
         # Default: return first candidate
         return candidates[0][0]
 
@@ -202,7 +219,7 @@ class OmnisearchWrapper:
         query: str,
         provider: Optional[SearchProvider] = None,
         num_results: int = 10,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Execute search with specified or auto-selected provider
@@ -226,10 +243,7 @@ class OmnisearchWrapper:
         tool_name = f"search_{provider.value}"
 
         # Prepare arguments
-        search_args = {
-            "query": query,
-            "limit": num_results
-        }
+        search_args = {"query": query, "limit": num_results}
         search_args.update(kwargs)
 
         # Execute search via MCP
@@ -240,7 +254,7 @@ class OmnisearchWrapper:
                 "query": query,
                 "results": result,
                 "num_results": len(result) if isinstance(result, list) else 1,
-                "success": True
+                "success": True,
             }
         except Exception as e:
             print(f"❌ Search failed with {provider.value}: {e}")
@@ -250,14 +264,11 @@ class OmnisearchWrapper:
                 "results": [],
                 "num_results": 0,
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     async def multi_provider_search(
-        self,
-        query: str,
-        providers: List[SearchProvider],
-        num_results: int = 5
+        self, query: str, providers: List[SearchProvider], num_results: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Search with multiple providers for comparison
@@ -272,19 +283,13 @@ class OmnisearchWrapper:
         """
         import anyio
 
-        tasks = [
-            self.search(query, provider, num_results)
-            for provider in providers
-        ]
+        tasks = [self.search(query, provider, num_results) for provider in providers]
 
         results = await anyio.gather(*tasks)
         return results
 
     def generate_query_variations(
-        self,
-        base_query: str,
-        angle: str,
-        num_variations: int = 5
+        self, base_query: str, angle: str, num_variations: int = 5
     ) -> List[str]:
         """
         Generate query variations for comprehensive coverage
@@ -305,16 +310,13 @@ class OmnisearchWrapper:
             f"{base_query} {angle} future trends",
             f"{base_query} {angle} challenges",
             f"{base_query} {angle} best practices",
-            f"{base_query} {angle} case studies"
+            f"{base_query} {angle} case studies",
         ]
 
         return variations[:num_variations]
 
     def add_search_operators(
-        self,
-        query: str,
-        provider: SearchProvider,
-        operators: Dict[str, Any]
+        self, query: str, provider: SearchProvider, operators: Dict[str, Any]
     ) -> str:
         """
         Add search operators for providers that support them
@@ -355,10 +357,7 @@ class OmnisearchWrapper:
 
         return query
 
-    def format_results_for_compression(
-        self,
-        results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def format_results_for_compression(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """
         Format search results for compression hook
 
@@ -371,7 +370,7 @@ class OmnisearchWrapper:
         formatted = {
             "provider": results.get("provider"),
             "query": results.get("query"),
-            "items": []
+            "items": [],
         }
 
         for item in results.get("results", []):
@@ -380,7 +379,7 @@ class OmnisearchWrapper:
                 "url": item.get("url", ""),
                 "content": item.get("content", "") or item.get("snippet", ""),
                 "score": item.get("score", 0),
-                "published_date": item.get("published_date", "")
+                "published_date": item.get("published_date", ""),
             }
             formatted["items"].append(formatted_item)
 
@@ -390,7 +389,7 @@ class OmnisearchWrapper:
         self,
         query: str,
         primary_provider: SearchProvider,
-        fallback_providers: List[SearchProvider] = None
+        fallback_providers: List[SearchProvider] = None,
     ) -> Dict[str, Any]:
         """
         Search with automatic fallback on failure
@@ -427,7 +426,7 @@ class OmnisearchWrapper:
             "query": query,
             "results": [],
             "success": False,
-            "error": "All providers failed"
+            "error": "All providers failed",
         }
 
     def get_provider_info(self, provider: SearchProvider) -> Dict[str, Any]:
@@ -451,13 +450,11 @@ class OmnisearchWrapper:
             "cost": specs.cost,
             "quality": specs.quality,
             "supports_operators": specs.supports_operators,
-            "available": self.provider_availability.get(provider, False)
+            "available": self.provider_availability.get(provider, False),
         }
 
     def get_recommended_providers(
-        self,
-        query_type: str,
-        budget: str = "$$"
+        self, query_type: str, budget: str = "$$"
     ) -> List[SearchProvider]:
         """
         Get recommended providers for query type and budget
@@ -474,7 +471,12 @@ class OmnisearchWrapper:
             "technical": [SearchProvider.BRAVE, SearchProvider.KAGI],
             "academic": [SearchProvider.EXA, SearchProvider.KAGI],
             "extraction": [SearchProvider.JINA, SearchProvider.FIRECRAWL],
-            "general": [SearchProvider.TAVILY, SearchProvider.BRAVE, SearchProvider.EXA]
+            "code": [SearchProvider.GITHUB, SearchProvider.BRAVE],
+            "general": [
+                SearchProvider.TAVILY,
+                SearchProvider.BRAVE,
+                SearchProvider.EXA,
+            ],
         }
 
         providers = recommendations.get(query_type, recommendations["general"])

@@ -15,6 +15,7 @@ import json
 @dataclass
 class ResearchPlan:
     """Research plan from Sequential Thinking"""
+
     angles: List[Dict[str, Any]]
     strategy: str
     reasoning: str
@@ -24,6 +25,7 @@ class ResearchPlan:
 @dataclass
 class VerificationAnalysis:
     """Verification analysis from Sequential Thinking"""
+
     confidence: float
     coverage_score: float
     depth_score: float
@@ -64,7 +66,7 @@ class SequentialThinkingWrapper:
         query: str,
         existing_findings: str = "",
         iteration: int = 0,
-        num_angles: int = 5
+        num_angles: int = 5,
     ) -> ResearchPlan:
         """
         Create comprehensive research plan using Sequential Thinking
@@ -99,7 +101,7 @@ Each angle should be sufficiently distinct to avoid redundancy.
             thought=f"{context}\n\nThought 1: What are the key aspects and dimensions of this query?",
             thought_number=1,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
         thought_sequence.append(thought1)
 
@@ -108,7 +110,7 @@ Each angle should be sufficiently distinct to avoid redundancy.
             thought=f"Based on the analysis: {thought1}\n\nThought 2: What are {num_angles} distinct angles that would provide comprehensive coverage?",
             thought_number=2,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
         thought_sequence.append(thought2)
 
@@ -117,7 +119,7 @@ Each angle should be sufficiently distinct to avoid redundancy.
             thought=f"Angles identified: {thought2}\n\nThought 3: For each angle, what specific information should we seek and what's the optimal search strategy?",
             thought_number=3,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
         thought_sequence.append(thought3)
 
@@ -126,16 +128,16 @@ Each angle should be sufficiently distinct to avoid redundancy.
             thought=f"Strategy: {thought3}\n\nThought 4: {f'Are there gaps in existing findings that need addressing? {existing_findings}' if existing_findings else 'What are the priorities for initial research?'}",
             thought_number=4,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
         thought_sequence.append(thought4)
 
         # Thought 5: Finalize plan
         thought5 = await self._sequential_thought(
-            thought=f"Gaps/Priorities: {thought4}\n\nThought 5: Output the final research plan with {num_angles} angles in JSON format:\n{{\n  \"angles\": [{{\n    \"name\": \"angle name\",\n    \"description\": \"what to research\",\n    \"priority\": 1-5,\n    \"search_strategy\": \"strategy\"\n  }}],\n  \"strategy\": \"overall strategy\",\n  \"reasoning\": \"why this plan\"\n}}",
+            thought=f'Gaps/Priorities: {thought4}\n\nThought 5: Output the final research plan with {num_angles} angles in JSON format:\n{{\n  "angles": [{{\n    "name": "angle name",\n    "description": "what to research",\n    "priority": 1-5,\n    "search_strategy": "strategy"\n  }}],\n  "strategy": "overall strategy",\n  "reasoning": "why this plan"\n}}',
             thought_number=5,
             total_thoughts=total_thoughts,
-            next_thought_needed=False
+            next_thought_needed=False,
         )
         thought_sequence.append(thought5)
 
@@ -146,13 +148,11 @@ Each angle should be sufficiently distinct to avoid redundancy.
             angles=plan_data.get("angles", []),
             strategy=plan_data.get("strategy", ""),
             reasoning=plan_data.get("reasoning", ""),
-            total_thoughts=total_thoughts
+            total_thoughts=total_thoughts,
         )
 
     async def verify_research(
-        self,
-        query: str,
-        findings: List[Dict[str, Any]]
+        self, query: str, findings: List[Dict[str, Any]]
     ) -> VerificationAnalysis:
         """
         Verify research sufficiency using Sequential Thinking
@@ -190,7 +190,7 @@ Evaluate across these criteria:
             thought=f"{context}\n\nThought 1: Assess COVERAGE - Are all aspects of the query addressed? What's covered and what's missing?",
             thought_number=1,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
 
         # Thought 2: Depth assessment
@@ -198,7 +198,7 @@ Evaluate across these criteria:
             thought=f"Coverage: {thought1}\n\nThought 2: Assess DEPTH - Is the information sufficiently detailed? Where do we need more depth?",
             thought_number=2,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
 
         # Thought 3: Source quality
@@ -206,7 +206,7 @@ Evaluate across these criteria:
             thought=f"Depth: {thought2}\n\nThought 3: Assess SOURCE QUALITY - Are sources authoritative and current? Rate the quality.",
             thought_number=3,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
 
         # Thought 4: Consistency
@@ -214,7 +214,7 @@ Evaluate across these criteria:
             thought=f"Quality: {thought3}\n\nThought 4: Assess CONSISTENCY - Do findings agree? Are contradictions explained?",
             thought_number=4,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
 
         # Thought 5: Identify gaps
@@ -222,15 +222,15 @@ Evaluate across these criteria:
             thought=f"Consistency: {thought4}\n\nThought 5: Based on all assessments, what are the specific knowledge GAPS? What additional research is needed?",
             thought_number=5,
             total_thoughts=total_thoughts,
-            next_thought_needed=True
+            next_thought_needed=True,
         )
 
         # Thought 6: Final verdict
         thought6 = await self._sequential_thought(
-            thought=f"Gaps: {thought5}\n\nThought 6: Output final verification in JSON:\n{{\n  \"confidence\": 0.0-1.0,\n  \"coverage_score\": 0.0-1.0,\n  \"depth_score\": 0.0-1.0,\n  \"source_quality_score\": 0.0-1.0,\n  \"consistency_score\": 0.0-1.0,\n  \"gaps\": [\"gap1\", \"gap2\"],\n  \"recommended_angles\": [\"angle1\", \"angle2\"],\n  \"decision\": \"continue\" or \"complete\",\n  \"reasoning\": \"why this decision\"\n}}",
+            thought=f'Gaps: {thought5}\n\nThought 6: Output final verification in JSON:\n{{\n  "confidence": 0.0-1.0,\n  "coverage_score": 0.0-1.0,\n  "depth_score": 0.0-1.0,\n  "source_quality_score": 0.0-1.0,\n  "consistency_score": 0.0-1.0,\n  "gaps": ["gap1", "gap2"],\n  "recommended_angles": ["angle1", "angle2"],\n  "decision": "continue" or "complete",\n  "reasoning": "why this decision"\n}}',
             thought_number=6,
             total_thoughts=total_thoughts,
-            next_thought_needed=False
+            next_thought_needed=False,
         )
 
         # Parse verification result
@@ -245,14 +245,14 @@ Evaluate across these criteria:
             gaps=verification_data.get("gaps", []),
             recommended_angles=verification_data.get("recommended_angles", []),
             decision=verification_data.get("decision", "continue"),
-            reasoning=verification_data.get("reasoning", "")
+            reasoning=verification_data.get("reasoning", ""),
         )
 
     async def analyze_gaps(
         self,
         query: str,
         findings: List[Dict[str, Any]],
-        verification: VerificationAnalysis
+        verification: VerificationAnalysis,
     ) -> Dict[str, Any]:
         """
         Deep gap analysis to guide next iteration
@@ -281,15 +281,13 @@ What specific research actions would address these gaps most effectively?
             thought=f"{context}\n\nAnalyze the gaps and output specific research actions in JSON format.",
             thought_number=1,
             total_thoughts=1,
-            next_thought_needed=False
+            next_thought_needed=False,
         )
 
         return json.loads(result) if self._is_json(result) else {"analysis": result}
 
     async def plan_synthesis(
-        self,
-        query: str,
-        findings: List[Dict[str, Any]]
+        self, query: str, findings: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
         Plan synthesis strategy for final report
@@ -314,7 +312,7 @@ Consider: themes, organization, key insights, recommendations.
             thought=f"{context}\n\nOutput synthesis plan in JSON format.",
             thought_number=1,
             total_thoughts=1,
-            next_thought_needed=False
+            next_thought_needed=False,
         )
 
         return json.loads(result) if self._is_json(result) else {"plan": result}
@@ -324,7 +322,7 @@ Consider: themes, organization, key insights, recommendations.
         thought: str,
         thought_number: int,
         total_thoughts: int,
-        next_thought_needed: bool
+        next_thought_needed: bool,
     ) -> str:
         """
         Execute a single sequential thought
@@ -338,6 +336,14 @@ Consider: themes, organization, key insights, recommendations.
         Returns:
             Thought result
         """
+        # Check if MCP client is available
+        if self.mcp_client is None:
+            print(
+                f"⚠️  Sequential Thinking MCP client not initialized - using fallback reasoning"
+            )
+            # Return a simple fallback response
+            return f"Fallback reasoning for thought {thought_number}: {thought[:200]}"
+
         try:
             result = await self.mcp_client.call_tool(
                 "sequentialthinking",
@@ -345,8 +351,8 @@ Consider: themes, organization, key insights, recommendations.
                     "thought": thought,
                     "thoughtNumber": thought_number,
                     "totalThoughts": total_thoughts,
-                    "nextThoughtNeeded": next_thought_needed
-                }
+                    "nextThoughtNeeded": next_thought_needed,
+                },
             )
             return result.get("output", result.get("result", str(result)))
         except Exception as e:
@@ -362,23 +368,26 @@ Consider: themes, organization, key insights, recommendations.
 
             # Try to find JSON in text
             import re
-            json_match = re.search(r'\{.*\}', thought_result, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", thought_result, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group())
 
             # Fallback: return basic structure
             return {
-                "angles": [{"name": "General Research", "description": "Broad coverage", "priority": 1}],
+                "angles": [
+                    {
+                        "name": "General Research",
+                        "description": "Broad coverage",
+                        "priority": 1,
+                    }
+                ],
                 "strategy": "Comprehensive research",
-                "reasoning": thought_result
+                "reasoning": thought_result,
             }
         except Exception as e:
             print(f"⚠️ Error parsing plan: {e}")
-            return {
-                "angles": [],
-                "strategy": "Error in planning",
-                "reasoning": str(e)
-            }
+            return {"angles": [], "strategy": "Error in planning", "reasoning": str(e)}
 
     def _parse_verification_from_thought(self, thought_result: str) -> Dict[str, Any]:
         """Parse verification from thought result"""
@@ -387,7 +396,8 @@ Consider: themes, organization, key insights, recommendations.
                 return json.loads(thought_result)
 
             import re
-            json_match = re.search(r'\{.*\}', thought_result, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", thought_result, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group())
 
@@ -401,7 +411,7 @@ Consider: themes, organization, key insights, recommendations.
                 "gaps": ["Unable to parse verification"],
                 "recommended_angles": [],
                 "decision": "continue",
-                "reasoning": thought_result
+                "reasoning": thought_result,
             }
         except Exception as e:
             print(f"⚠️ Error parsing verification: {e}")
@@ -414,13 +424,11 @@ Consider: themes, organization, key insights, recommendations.
                 "gaps": [str(e)],
                 "recommended_angles": [],
                 "decision": "continue",
-                "reasoning": str(e)
+                "reasoning": str(e),
             }
 
     def _summarize_findings_for_verification(
-        self,
-        findings: List[Dict[str, Any]],
-        max_length: int = 2000
+        self, findings: List[Dict[str, Any]], max_length: int = 2000
     ) -> str:
         """Summarize findings for verification"""
         summary_parts = []
@@ -428,7 +436,9 @@ Consider: themes, organization, key insights, recommendations.
         for i, finding in enumerate(findings[:20], 1):  # Max 20 findings
             finding_summary = f"{i}. "
             if isinstance(finding, dict):
-                finding_summary += finding.get("summary", finding.get("content", str(finding)))[:100]
+                finding_summary += finding.get(
+                    "summary", finding.get("content", str(finding))
+                )[:100]
             else:
                 finding_summary += str(finding)[:100]
 
@@ -458,7 +468,7 @@ Consider: themes, organization, key insights, recommendations.
         iteration: int,
         total_findings: int,
         latest_verification: VerificationAnalysis,
-        cost_so_far: float
+        cost_so_far: float,
     ) -> Dict[str, Any]:
         """
         Evaluate progress and recommend next steps
@@ -493,7 +503,9 @@ Consider: confidence level, cost efficiency, diminishing returns.
             thought=f"{context}\n\nProvide recommendation in JSON format.",
             thought_number=1,
             total_thoughts=1,
-            next_thought_needed=False
+            next_thought_needed=False,
         )
 
-        return json.loads(result) if self._is_json(result) else {"recommendation": result}
+        return (
+            json.loads(result) if self._is_json(result) else {"recommendation": result}
+        )
